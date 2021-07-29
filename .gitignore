@@ -67,6 +67,9 @@ instance/
 
 # Scrapy stuff:
 .scrapy
+www*
+localhost_3000*
+src/test*
 
 # Sphinx documentation
 docs/_build/
