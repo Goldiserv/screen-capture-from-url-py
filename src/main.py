@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 from urllib.parse import urlparse, urljoin
 import time
 import requests
@@ -24,8 +25,6 @@ YELLOW = colorama.Fore.YELLOW
 internal_urls = set()
 external_urls = set()
 total_urls_visited = 0
-
-root= tk.Tk()
 
 def is_valid(url):
     """
@@ -62,10 +61,10 @@ def get_all_website_links(url):
         if domain_name not in href:
             # external link
             if href not in external_urls:
-                print(f"{GRAY}[!] External link: {href}{RESET}")
+                printMsg(f"{GRAY}[!] External link: {href}{RESET}")
                 external_urls.add(href)
             continue
-        print(f"{GREEN}[*] Internal link: {href}{RESET}")
+        printMsg(f"{GREEN}[*] Internal link: {href}{RESET}")
         urls.add(href)
         internal_urls.add(href)
     return urls
@@ -79,7 +78,7 @@ def crawl(url, max_urls=3, load_delay=0.05):
     """
     global total_urls_visited
     total_urls_visited += 1
-    print(f"{YELLOW}[*] Crawling: {url}{RESET}")
+    printMsg(f"{YELLOW}[*] Crawling: {url}{RESET}")
     links = get_all_website_links(url)
     for link in links:
         time.sleep(load_delay)
@@ -88,21 +87,24 @@ def crawl(url, max_urls=3, load_delay=0.05):
         crawl(link, max_urls=max_urls)
 
 def createCleanFolderFromUrl(url):
-    print(url)
+    printMsg(url)
     domain_name = urlparse(url).netloc
     cleanDomainName = domain_name.replace(":","_")
     topLevelPath = Path().resolve()
     Path(f"{topLevelPath}/{cleanDomainName}").mkdir(parents=True, exist_ok=True)
-    print(f"created folder at: {topLevelPath}/{cleanDomainName}/")
+    printMsg(f"created folder at: {topLevelPath}/{cleanDomainName}/")
     return (f"{topLevelPath}/{cleanDomainName}/")
+
+def printMsg(*args):
+    text2.insert(tk.END, "".join(map(str,args)) + "\n")
+    text2.see(tk.END)
+    print("".join(map(str,args)))
 
 def saveUrls ():
     # args
     url = entry_url.get()
     if not is_valid(url):
-        label_invalid_url = tk.Label(root, text='Invalid URL', anchor="e")
-        label_invalid_url.config(font=('helvetica', 10))
-        canvas1.create_window(450, 290, window=label_invalid_url)
+        printMsg("Invalid URL. URLs must begin with http or https")
         return
     max_urls = int(entry_max_urls.get())
     load_delay = float(entry_page_delay.get())
@@ -110,33 +112,30 @@ def saveUrls ():
     
     crawl(url, max_urls, load_delay)
 
-    print("[+] Total Internal links:", len(internal_urls))
-    print("[+] Total External links:", len(external_urls))
-    print("[+] Total URLs:", len(external_urls) + len(internal_urls))
-    print("[+] Total crawled URLs:", max_urls)
+    printMsg("[+] Total Internal links:", len(internal_urls))
+    printMsg("[+] Total External links:", len(external_urls))
+    printMsg("[+] Total URLs:", len(external_urls) + len(internal_urls))
+    printMsg("[+] Total crawled URLs:", max_urls)
 
     internal_urls_sorted = sorted(internal_urls)
     external_urls_sorted = sorted(external_urls)
 
-    domain_name = urlparse(url).netloc
     cleanPath = createCleanFolderFromUrl(url)
 
     # save the internal links to a file
     with open(f"{cleanPath}/internal_links.txt", "w") as f:
         for internal_link in internal_urls_sorted:
-            print(internal_link.strip(), file=f)
+            printMsg(internal_link.strip(), file=f)
 
     # save the external links to a file
     with open(f"{cleanPath}/external_links.txt", "w") as f:
         for external_link in external_urls_sorted:
-            print(external_link.strip(), file=f)
+            printMsg(external_link.strip(), file=f)
 
 def saveScreenshots ():
     url = entry_url.get()
     if not is_valid(url):
-        label_invalid_url = tk.Label(root, text='Invalid URL', anchor="e")
-        label_invalid_url.config(font=('helvetica', 10))
-        canvas1.create_window(450, 290, window=label_invalid_url)
+        printMsg("Invalid URL. URLs must begin with http or https")
         return
 
     maxScreenshots = int(entry_max_screenshots.get())
@@ -153,7 +152,7 @@ def saveScreenshots ():
     # save images of internal links
     screenshotCounter = 1
     cleanPath = createCleanFolderFromUrl(url)
-    print(f"saving files to {cleanPath}/")
+    printMsg(f"saving files to {cleanPath}/")
 
     internalLinksFile = open(f"{cleanPath}/internal_links.txt", "r")
     internalLinksLines = internalLinksFile.readlines()
@@ -166,71 +165,98 @@ def saveScreenshots ():
         height = driver.execute_script("return document.body.scrollHeight")
         driver.set_window_size(1980,height+80)
         screenshot_util.fullpage_screenshot(driver, f"{cleanPath}/{screenshotCounter:04}.png")
-        print(f"Printing screenshot {internal_link.strip()} to {cleanPath}/{screenshotCounter:04}.png")
+        printMsg(f"Printing screenshot {internal_link.strip()} to {cleanPath}/{screenshotCounter:04}.png")
         if screenshotCounter >= maxScreenshots: break
         screenshotCounter += 1
 
     internalLinksFile.close()
     driver.quit()
 
-canvas1 = tk.Canvas(root, width = 800, height = 350,  relief = 'raised')
-canvas1.pack()
+labelCurrentY = 1
+def addUiInput(labelText, inputWidth=10):
+    global labelCurrentY
+    label = tk.Label(root, text=labelText, font=('helvetica', 10), bd=1, justify="right")
+    label.grid(row=labelCurrentY, column=1, padx=(40, 10), pady=5)
+    entryField = tk.Entry (root, width=inputWidth, justify="left")
+    entryField.grid(row=labelCurrentY, column=2, padx=(10, 10))
+    labelCurrentY += 1
+    return entryField
 
-label1 = tk.Label(root, text='Save images from URL')
-label1.config(font=('helvetica', 14))
-canvas1.create_window(200, 25, window=label1)
+def addUiCheckbox(labelText, varCheckbox):
+    global labelCurrentY
+    label = tk.Label(root, text=labelText, font=('helvetica', 10), bd=1, justify="right")
+    label.grid(row=labelCurrentY, column=1, padx=(40, 10), pady=5)
+    entryField = tk.Checkbutton(root, text="", variable=varCheckbox, justify="left")
+    entryField.grid(row=labelCurrentY, column=2, padx=(10, 10))
+    labelCurrentY += 1
+    return entryField
+
+root= tk.Tk()
+root.title('Screen capture all links in URL app')
+root.geometry('750x600')
+
+# Title 1
+label1 = tk.Label(root, text='Save all sub-page links to a file', font=('helvetica', 14))
+label1.grid(row=labelCurrentY, column=1, padx=(10, 10), pady=5)
+labelCurrentY += 1
 
 # url entry
-label_url = tk.Label(root, text='Enter URL:', anchor="e")
-label_url.config(font=('helvetica', 10))
-canvas1.create_window(250, 70, window=label_url)
-entry_url = tk.Entry (root) 
-canvas1.create_window(450, 70, window=entry_url)
+entry_url = addUiInput('Enter URL:', 30)
 
 # delay between each page to collect URLs
-label_page_delay = tk.Label(root, text='Delay (sec) collect URLs:', anchor="e")
-label_page_delay.config(font=('helvetica', 10))
-canvas1.create_window(250, 100, window=label_page_delay)
-entry_page_delay = tk.Entry (root)
-entry_page_delay.insert(0, '0.05')
-canvas1.create_window(450, 100, window=entry_page_delay)
+entry_page_delay = addUiInput('Delay (sec) collect URLs:')
+entry_page_delay.insert(0, '0.05') # set default
 
 # Number of max URLs to crawl, default is 3
-label_max_urls = tk.Label(root, text='Number of max URLs to crawl:', anchor="e")
-label_max_urls.config(font=('helvetica', 10))
-canvas1.create_window(250, 130, window=label_max_urls)
-entry_max_urls = tk.Entry (root)
-entry_max_urls.insert(0, '3')
-canvas1.create_window(450, 130, window=entry_max_urls)
+entry_max_urls = addUiInput('Number of max URLs to crawl:')
+entry_max_urls.insert(0, '3') # set default
+
+# control button 1
+buttonSaveUrls = tk.Button(text='Save URLs', command=saveUrls, bg='brown', fg='white', font=('helvetica', 9, 'bold'))
+buttonSaveUrls.grid(row=labelCurrentY, column=2, padx=(10, 10), pady=5)
+labelCurrentY += 1
+
+sep = ttk.Separator(root,orient='horizontal').grid(row=labelCurrentY, columnspan=3, sticky="ew",pady=5)
+labelCurrentY += 1
+
+label2 = tk.Label(root, text='Save screenshots from file generated', font=('helvetica', 14))
+label2.grid(row=labelCurrentY, column=1, padx=(10, 10), pady=5)
+labelCurrentY += 1
 
 # Max screenshots
-label_max_screenshots = tk.Label(root, text='Max screenshots:', anchor="e")
-label_max_screenshots.config(font=('helvetica', 10))
-canvas1.create_window(250, 160, window=label_max_screenshots)
-entry_max_screenshots = tk.Entry (root)
+entry_max_screenshots = addUiInput('Max screenshots (enter 999 if not testing):')
 entry_max_screenshots.insert(0, '1')
-canvas1.create_window(450, 160, window=entry_max_screenshots)
 
 # wait time (sec) for each page to load
-label_page_load_delay = tk.Label(root, text='Wait time (sec) for page load:', anchor="e")
-label_page_load_delay.config(font=('helvetica', 10))
-canvas1.create_window(250, 190, window=label_page_load_delay)
-entry_page_load_delay = tk.Entry (root)
+entry_page_load_delay = addUiInput('Wait seconds for page load before screenshot:')
 entry_page_load_delay.insert(0, '5')
-canvas1.create_window(450, 190, window=entry_page_load_delay)
 
 # headless mode
-label_headless_mode = tk.Label(root, text='Headless mode (some sites block headless):', anchor="e")
-label_headless_mode.config(font=('helvetica', 10))
-canvas1.create_window(250, 220, window=label_headless_mode)
 var_entry_headless_mode = tk.IntVar()
-entry_headless_mode = tk.Checkbutton(root, text="", variable=var_entry_headless_mode)
-canvas1.create_window(430, 220, window=entry_headless_mode)
+entry_headless_mode = addUiCheckbox('Headless mode (some sites block headless):', var_entry_headless_mode)
 
-button1 = tk.Button(text='Save URLs', command=saveUrls, bg='brown', fg='white', font=('helvetica', 9, 'bold'))
-canvas1.create_window(450, 260, window=button1)
- 
-button2 = tk.Button(text='Save screenshots', command=saveScreenshots, bg='brown', fg='white', font=('helvetica', 9, 'bold'))
-canvas1.create_window(450, 290, window=button2)
+# control button 2
+buttonSaveScreenshots = tk.Button(text='Save screenshots', command=saveScreenshots, bg='brown', fg='white', font=('helvetica', 9, 'bold'))
+buttonSaveScreenshots.grid(row=labelCurrentY, column=2, padx=(10, 10), pady=5)
+labelCurrentY += 1
+
+# Title Msgbox
+label1 = tk.Label(root, text='Messages', font=('helvetica', 12), justify="left")
+label1.grid(row=labelCurrentY, column=0, padx=(10, 10), pady=5, sticky="E")
+labelCurrentY += 1
+text2 = tk.Text(root, height=8)
+scroll = tk.Scrollbar(root, command=text2.yview)
+text2['yscrollcommand'] = scroll.set
+text2.grid(rowspan=1, columnspan=3, padx=(10, 10), pady=5)
+scroll.grid(row=labelCurrentY, rowspan=1, column=4, sticky='nsew')
+labelCurrentY += 1
+
+def clearMsgs():
+    text2.delete(1.0, tk.END)
+
+# clear msg button 1
+buttonClearMsgs = tk.Button(text='Clear messages', command=clearMsgs, bg='brown', fg='white', font=('helvetica', 9, 'bold'))
+buttonClearMsgs.grid(row=labelCurrentY, column=2, padx=(10, 10), pady=5)
+labelCurrentY += 1
 
 root.mainloop()
