@@ -12,6 +12,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 import screenshot_util
 from pathlib import Path
 import time
+import webbrowser
 
 # init the colorama module
 colorama.init()
@@ -242,7 +243,7 @@ labelCurrentY += 1
 
 # Title Msgbox
 label1 = tk.Label(root, text='Messages', font=('helvetica', 12), justify="left")
-label1.grid(row=labelCurrentY, column=0, padx=(10, 10), pady=5, sticky="E")
+label1.grid(row=labelCurrentY, column=1, padx=(10, 10), pady=5, sticky="E")
 labelCurrentY += 1
 text2 = tk.Text(root, height=8)
 scroll = tk.Scrollbar(root, command=text2.yview)
@@ -257,6 +258,15 @@ def clearMsgs():
 # clear msg button 1
 buttonClearMsgs = tk.Button(text='Clear messages', command=clearMsgs, bg='brown', fg='white', font=('helvetica', 9, 'bold'))
 buttonClearMsgs.grid(row=labelCurrentY, column=2, padx=(10, 10), pady=5)
+labelCurrentY += 1
+
+def callback(url):
+    webbrowser.open_new(url)
+    
+# Footer
+labelFooter = tk.Label(root, text='Licence and support for screen-capture-from-url-py v1.01', fg="blue", cursor="hand2", font=('helvetica', 10), justify="left")
+labelFooter.grid(row=labelCurrentY, column=1, padx=(10, 10), pady=5, sticky="E")
+labelFooter.bind("<Button-1>", lambda e: callback("https://github.com/Goldiserv/screen-capture-from-url-py"))
 labelCurrentY += 1
 
 root.mainloop()
