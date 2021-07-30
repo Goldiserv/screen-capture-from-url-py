@@ -1,4 +1,4 @@
-"Screen Capture from URL" is Python desktop utility that logs all sub-pages at a URL to a file, and then screen captures each page.
+"Screen Capture from URL" is Windows PC desktop app that logs all sub-pages at a URL to a file, and then screen captures each page.
 
 **Warning:** this tool is designed for QA purposes. Running this on a public site may be against their terms of service and may result in your IP address being blocked as you will be web-scraping their site.
 
@@ -10,7 +10,7 @@ This repository serves as a place for bug reports, feature requests, and general
 - v1.01
 
 ### Features
-- List sub-pages at a url via the HTML a-href element. 
+- List sub-pages at a URL via the HTML a-href element. 
 Sub-pages not referenced via a a-href element will not be found
 - Using this list, screenshot the full page to a file
 - Can operate in headless mode (i.e. browser window does not open on your computer, but screenshots are still saved)

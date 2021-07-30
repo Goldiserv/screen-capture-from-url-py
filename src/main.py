@@ -264,7 +264,7 @@ def callback(url):
     webbrowser.open_new(url)
     
 # Footer
-labelFooter = tk.Label(root, text='Licence and support for screen-capture-from-url-py v1.01', fg="blue", cursor="hand2", font=('helvetica', 10), justify="left")
+labelFooter = tk.Label(root, text='License and support for screen-capture-from-url-py v1.01', fg="blue", cursor="hand2", font=('helvetica', 10), justify="left")
 labelFooter.grid(row=labelCurrentY, column=1, padx=(10, 10), pady=5, sticky="E")
 labelFooter.bind("<Button-1>", lambda e: callback("https://github.com/Goldiserv/screen-capture-from-url-py"))
 labelCurrentY += 1
